@@ -3,7 +3,11 @@
 (function() {
     const output = document.getElementById("output");
 
+    const myModal = new bootstrap.Modal('#myModal');
+
     const address = "http://localhost:8081";
+
+    let currentDuck = {};
 
     async function getDucks() {
         try {
@@ -43,6 +47,15 @@
         duckHabitat.classList.add("card-text");
         duckBody.appendChild(duckHabitat);
 
+        const updateBtn = document.createElement("button");
+        updateBtn.innerText = 'UPDATE';
+        updateBtn.classList.add("btn", "btn-danger");
+        updateBtn.addEventListener('click', () => {
+            currentDuck = {name, age, colour, habitat, id};
+            myModal.show();
+        });
+        duckBody.appendChild(updateBtn);
+
         const deleteBtn = document.createElement("button");
         deleteBtn.innerText = 'DELETE';
         deleteBtn.classList.add("btn", "btn-danger");
@@ -58,6 +71,15 @@
         const res = await axios.delete(`${address}/duck/deleteDuck/${id}`);
         getDucks();
     }
+
+    document.getElementById("myModal").addEventListener("show.bs.modal", function(e) {
+        const form = document.getElementById("updateForm");
+        debugger;
+        for (let k of Object.keys(currentDuck)) {
+            if (k === 'id') continue;
+            form[k].value = currentDuck[k];
+        }
+    });
 
     document.getElementById("duckForm").addEventListener("submit", async function(e) {
         e.preventDefault();
@@ -79,6 +101,27 @@
         }
     });
 
-    getDucks();
-    
+    document.getElementById("updateForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const {name, age, colour, habitat} = this;
+        
+        const newDuck = {
+            name: name.value,
+            age: age.value,
+            colour: colour.value,
+            habitat: habitat.value
+        }
+        debugger;
+        this.reset();
+        name.focus();
+        try {
+            const res = await axios.put(`${address}/duck/updateDuck?id=${currentDuck.id}`, newDuck);
+            getDucks();
+            myModal.hide();
+        } catch(error) {
+            console.error(error);
+        }
+    });
+
+    getDucks();    
 })();
